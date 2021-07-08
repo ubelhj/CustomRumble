@@ -6,9 +6,7 @@ BAKKESMOD_PLUGIN(CustomRumble1, "Custom rumble", plugin_version, PLUGINTYPE_FREE
 std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
 std::list<int> enabledBlue;
-int numEnabledBlue = 0;
 std::list<int> enabledOrange;
-int numEnabledOrange = 0;
 
 
 void CustomRumble1::onLoad()
@@ -39,10 +37,8 @@ void CustomRumble1::onLoad()
 			.addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
 				if (cvar.getBoolValue()) {
 					enabledBlue.push_front(i);
-					numEnabledBlue++;
 				} else {
 					enabledBlue.remove(i);
-					numEnabledBlue--;
 				}
 				});
 
@@ -50,10 +46,8 @@ void CustomRumble1::onLoad()
 			.addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
 				if (cvar.getBoolValue()) {
 					enabledOrange.push_front(i);
-					numEnabledOrange++;
 				} else {
 					enabledOrange.remove(i);
-					numEnabledOrange--;
 				}
 				});
 	}
@@ -95,25 +89,7 @@ bool CustomRumble1::LoadClasses() {
 
 ServerWrapper CustomRumble1::getSW() {
 	if (gameWrapper->IsInOnlineGame()) {
-		auto server = gameWrapper->GetOnlineGame();
-
-		if (server.IsNull()) {
-			cvarManager->log("null server");
-			return NULL;
-		}
-
-		auto playlist = server.GetPlaylist();
-
-		if (!playlist) {
-			return NULL;
-		}
-
-		// playlist 24 is a LAN match for a client
-		if (playlist.GetPlaylistId() != 24) {
-			return NULL;
-		}
-
-		return server;
+		return NULL;
 	}
 	if (gameWrapper->IsInGame()) {
 		auto server = gameWrapper->GetGameEventAsServer();
@@ -144,7 +120,6 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 		return;
 	}
 
-
 	TArray<class ASpecialPickup_TA*> remItems = itemPool->RemainingItems;
 
 	if (paramValues->Car == nullptr) {
@@ -157,6 +132,8 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 	cvarManager->log("generated powerup " + nextPowerup);
 
 	if (nextPowerup == "") {
+		ASpecialPickup_TA* defPickup = Utils::GetDefaultInstanceOf<ASpecialPickup_TA>();
+		paramValues->Item = defPickup;
 		return;
 	}
 
@@ -164,7 +141,7 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 		for (ASpecialPickup_TA* remItem : remItems) {
 			if (remItem->PickupName.IsValid()) {
 				std::string name = remItem->PickupName.ToString();
-				//cvarManager->log(name);
+				cvarManager->log(name);
 
 				if (name == nextPowerup) {
 					paramValues->Item = remItem;
@@ -182,23 +159,18 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
 	std::list<int> powerupsList;
-	int numSelected;
 
 	if (teamNum == 0) {
 		powerupsList = enabledBlue;
-		numSelected = numEnabledBlue;
 	} else {
 		powerupsList = enabledOrange;
-		numSelected = numEnabledOrange;
 	}
-
-	cvarManager->log("numSelected = " + std::to_string(numSelected));
 
 	for (int powerup: powerupsList) {
 		cvarManager->log("option " + std::to_string(powerup) + " " + powerUpStrings[powerup]);
 	}
 
-	if (numSelected == 0) {
+	if (powerupsList.size() == 0) {
 		return "";
 	}
 

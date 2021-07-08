@@ -50,14 +50,14 @@ public:
 	std::string powerUpStrings[NumPowerups] = {
 		"BallSpring",
 		"CarSpring",
-		"GravityWell",
-		"Swapper",
+		"BallMagnet",
+		"EnemySwapper",
 		"BallVelcro",
-		"BallGrapplingHook",
-		"StrongHit",
+		"GrapplingHook",
+		"Powerhitter",
 		"BallLasso",
 		"BallFreeze",
-		"BoostOverride",
+		"EnemyBooster",
 		"Tornado"
 	};
 
