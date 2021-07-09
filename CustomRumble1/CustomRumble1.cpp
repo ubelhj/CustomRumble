@@ -120,14 +120,21 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 		return;
 	}
 
-	TArray<class ASpecialPickup_TA*> remItems = itemPool->RemainingItems;
+	TArray<class ASpecialPickup_TA*> remItems;
 
 	if (paramValues->Car == nullptr) {
 		return;
 	}
 	uint8_t teamNum = paramValues->Car->GetTeamNum();
 
-	std::string nextPowerup = generateNextPower(teamNum);
+	CarWrapper wrappedCar((uintptr_t) paramValues->Car);
+
+	if (!wrappedCar) {
+		cvarManager->log("wrapped car broke");
+		return;
+	}
+
+	std::string nextPowerup = generateNextPower(wrappedCar.GetTeamNum2());
 
 	cvarManager->log("generated powerup " + nextPowerup);
 
@@ -138,6 +145,8 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 	}
 
 	while (true) {
+		//itemPool->RefillPool();
+		remItems = itemPool->RemainingItems;
 		for (ASpecialPickup_TA* remItem : remItems) {
 			if (remItem->PickupName.IsValid()) {
 				std::string name = remItem->PickupName.ToString();
@@ -145,20 +154,24 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 
 				if (name == nextPowerup) {
 					paramValues->Item = remItem;
-
-					itemPool->RefillPool();
+					//if (remItem->IsA(ASpecialPickup_Targeted_TA)) {}
+					//remItem->OnCreated();
+					//remItem->OnVehicleSetupComplete();
+					//paramValues->Car->ForceNetUpdatePacket();
+					//remItem->ApplyPickup(paramValues->Car);
 					return;
 				}
 			}
 		}
 
 		itemPool->RefillPool();
-		remItems = itemPool->RemainingItems;
 	}
 }
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
 	std::list<int> powerupsList;
+
+	cvarManager->log("team = " + std::to_string(teamNum));
 
 	if (teamNum == 0) {
 		powerupsList = enabledBlue;
