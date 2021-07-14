@@ -22,9 +22,14 @@ void CustomRumble1::onLoad()
 	GNames = reinterpret_cast<TArray<FNameEntry*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
 
 	if (AreGObjectsValid() && AreGNamesValid()) {
-		gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.ApplyItemToCar",
+		/*gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.ApplyItemToCar",
 			[this](ActorWrapper caller, void* params, std::string eventname) {
 				onPowerupGive(caller, params);
+			});*/
+
+		gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
+			[this](ActorWrapper caller, void* params, std::string eventname) {
+				onGiveItem(caller, params);
 			});
 	} else {
 		cvarManager->log("(onLoad) Error: RLSDK classes are wrong, please contact JerryTheBee");
@@ -144,7 +149,35 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 		return;
 	}
 
+	/*
+	TArray<struct FRandomWeight> items = itemPool->Items;
+
+	for (struct FRandomWeight itemtype : items) {
+		UObject* object = itemtype.Obj;
+
+		if (object == nullptr) {
+			cvarManager->log("null object");
+			continue;
+		}
+
+		cvarManager->log("object name = " + object->Name.ToString());
+
+		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
+			ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
+
+			ARumblePickups_TA * pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
+
+			pickups->SetAvailablePickup(item, 0);
+			
+			//item->ApplyPickup(paramValues->Car);
+			return;
+		}
+	}
+
+	return;*/
+
 	while (true) {
+		//itemPool->OnNewRound();
 		//itemPool->RefillPool();
 		remItems = itemPool->RemainingItems;
 		for (ASpecialPickup_TA* remItem : remItems) {
@@ -153,7 +186,17 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 				cvarManager->log(name);
 
 				if (name == nextPowerup) {
-					paramValues->Item = remItem;
+					//paramValues->Item = remItem;
+
+					wrappedCar.ForceNetUpdate2();
+					wrappedCar.ForceNetUpdatePacket();
+
+					RumblePickupComponentWrapper rumbleWrapper = wrappedCar.GetAttachedPickup();
+					wrappedCar.SetAttachedPickup2(RumblePickupComponentWrapper((uintptr_t)remItem));
+
+					rumbleWrapper.ForceNetUpdate2();
+					rumbleWrapper.ForceNetUpdatePacket();
+					//itemPool->GiveItem(paramValues->Car);
 					//if (remItem->IsA(ASpecialPickup_Targeted_TA)) {}
 					//remItem->OnCreated();
 					//remItem->OnVehicleSetupComplete();
@@ -166,6 +209,188 @@ void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
 
 		itemPool->RefillPool();
 	}
+}
+
+bool looped = false;
+void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
+	if (params == nullptr || &caller == nullptr) {
+		return;
+	}
+
+	if (looped) {
+		looped = false;
+		cvarManager->log("Looped!");
+		return;
+	} else {
+		looped = true;
+	}
+
+	if (!getSW()) return;
+
+	/*std::vector<UItemPool_TA*> allpools = Utils::GetAllInstancesOf< UItemPool_TA>();
+
+	int i = 0;
+	for (UItemPool_TA* pool : allpools) {
+		TArray<struct FRandomWeight> items = pool->Items;
+		cvarManager->log("pool " + std::to_string(i));
+		cvarManager->log("is pool " + std::to_string(caller.memory_address == (uintptr_t) pool));
+
+		for (struct FRandomWeight itemtype : items) {
+			UObject* object = itemtype.Obj;
+
+			if (object == nullptr) {
+				cvarManager->log("null object");
+				continue;
+			}
+
+			cvarManager->log("object name = " + object->Name.ToString());
+
+			cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+
+		}
+		i++;
+	}*/
+
+	UItemPoolCycle_TA_execGiveItem_Params* paramValues = (UItemPoolCycle_TA_execGiveItem_Params*)params;
+
+	UItemPoolCycle_TA* itemPool = (UItemPoolCycle_TA*)caller.memory_address;
+
+	if (itemPool == nullptr || paramValues == nullptr) {
+		return;
+	}
+
+	TArray<struct FRandomWeight> items = itemPool->Items;
+
+	for (struct FRandomWeight itemtype : items) {
+		UObject* object = itemtype.Obj;
+
+		if (object == nullptr) {
+			cvarManager->log("null object");
+			continue;
+		}
+
+		cvarManager->log("object name = " + object->Name.ToString());
+		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+
+		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
+			//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
+
+			float newValue = 2.0;
+
+			memcpy_s(&itemtype.Weight, sizeof(float), &newValue, sizeof(float));
+			//itemtype.Weight = 2.0;
+			//itemtype.OrigWeight = 2.0;
+
+			cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
+			//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
+
+			//pickups->SetAvailablePickup(item, 0);
+
+			//item->ApplyPickup(paramValues->Car);
+
+		}
+		else {
+			float newValue = 0.0;
+			
+			memcpy_s(&itemtype.Weight, sizeof(float), &newValue, sizeof(float));
+		}
+	}
+
+	cvarManager->log("part2");
+	for (struct FRandomWeight itemtype : items) {
+		UObject* object = itemtype.Obj;
+
+		if (object == nullptr) {
+			cvarManager->log("null object");
+			continue;
+		}
+
+		cvarManager->log("object name = " + object->Name.ToString());
+		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+	}
+	
+	itemPool->RefillPool();
+
+	itemPool->GiveItem(paramValues->Car);
+
+	//TArray<struct FRandomWeight> items = itemPool->Items;
+
+	/*std::vector<UPlayerItemDispenser_TA*> allDispensers = Utils::GetAllInstancesOf<UPlayerItemDispenser_TA>();
+
+	int i = 0;
+	for (UPlayerItemDispenser_TA* dispenser : allDispensers) {
+		UItemPool_TA* itemPool = dispenser->ItemPool;
+		TArray<struct FRandomWeight> items = itemPool->Items;
+
+		cvarManager->log("pool " + std::to_string(i));
+		cvarManager->log("is pool " + std::to_string(caller.memory_address == (uintptr_t)itemPool));
+
+		for (struct FRandomWeight itemtype : items) {
+			UObject* object = itemtype.Obj;
+
+			if (object == nullptr) {
+				cvarManager->log("null object");
+				continue;
+			}
+
+			cvarManager->log("object name = " + object->Name.ToString());
+			cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+
+			if (object->Name.ToString() == "SpecialPickup_CarSpring") {
+				//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
+
+				itemtype.Weight = 2.0;
+				itemtype.OrigWeight = 2.0;
+
+				cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
+				//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
+
+				//pickups->SetAvailablePickup(item, 0);
+
+				//item->ApplyPickup(paramValues->Car);
+
+			}
+			else {
+				itemtype.Weight = 0.0;
+				itemtype.OrigWeight = 0.0;
+			}
+		}
+		if (caller.memory_address == (uintptr_t)itemPool) {
+			((UItemPoolCycle_TA*)itemPool)->RefillPool();
+		}
+		i++;
+	}*/
+
+	/*for (struct FRandomWeight itemtype : items) {
+		UObject* object = itemtype.Obj;
+
+		if (object == nullptr) {
+			cvarManager->log("null object");
+			continue;
+		}
+
+		cvarManager->log("object name = " + object->Name.ToString());
+
+		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+
+		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
+			//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
+
+			itemtype.Weight = 2.0;
+			itemtype.OrigWeight = 2.0;
+
+			cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
+			//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
+
+			//pickups->SetAvailablePickup(item, 0);
+
+			//item->ApplyPickup(paramValues->Car);
+			
+		} else {
+			itemtype.Weight = 0.0;
+			itemtype.OrigWeight = 0.0;
+		}
+	}*/
 }
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
