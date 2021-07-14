@@ -22,7 +22,7 @@ void CustomRumble1::onLoad()
     GNames = reinterpret_cast<TArray<FNameEntry*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
 
     if (AreGObjectsValid() && AreGNamesValid()) {
-        gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
+        gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
             [this](ActorWrapper caller, void* params, std::string eventname) {
                 onGiveItem(caller, params);
             });
@@ -162,7 +162,7 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
     
     itemPool->RefillPool();
 
-    itemPool->GiveItem(paramValues->Car);
+    //itemPool->GiveItem(paramValues->Car);
 }
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
