@@ -48,17 +48,17 @@ public:
 	};
 
 	std::string powerUpStrings[NumPowerups] = {
-		"BallSpring",
-		"CarSpring",
-		"BallMagnet",
-		"EnemySwapper",
-		"BallVelcro",
-		"GrapplingHook",
-		"Powerhitter",
-		"BallLasso",
-		"BallFreeze",
-		"EnemyBooster",
-		"Tornado"
+		"SpecialPickup_BallSpring",
+		"SpecialPickup_CarSpring",
+		"SpecialPickup_GravityWell",
+		"SpecialPickup_Swapper",
+		"SpecialPickup_BallVelcro",
+		"SpecialPickup_BallGrapplingHook",
+		"SpecialPickup_StrongHit",
+		"SpecialPickup_BallLasso",
+		"SpecialPickup_BallFreeze",
+		"SpecialPickup_BoostOverride",
+		"SpecialPickup_Tornado"
 	};
 
 	std::string powerUpEnglishStrings[NumPowerups] = {

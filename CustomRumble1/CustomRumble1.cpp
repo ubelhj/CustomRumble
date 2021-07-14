@@ -11,51 +11,46 @@ std::list<int> enabledOrange;
 
 void CustomRumble1::onLoad()
 {
-	_globalCvarManager = cvarManager;
+    _globalCvarManager = cvarManager;
 
-	std::random_device dev;
-	std::mt19937 rng(dev());
+    std::random_device dev;
+    std::mt19937 rng(dev());
 
-	RandomDevice = std::make_shared<std::mt19937>(rng);
+    RandomDevice = std::make_shared<std::mt19937>(rng);
 
-	GObjects = reinterpret_cast<TArray<UObject*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GObjects_Pattern, GObjects_Mask));
-	GNames = reinterpret_cast<TArray<FNameEntry*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
+    GObjects = reinterpret_cast<TArray<UObject*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GObjects_Pattern, GObjects_Mask));
+    GNames = reinterpret_cast<TArray<FNameEntry*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
 
-	if (AreGObjectsValid() && AreGNamesValid()) {
-		/*gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.ApplyItemToCar",
-			[this](ActorWrapper caller, void* params, std::string eventname) {
-				onPowerupGive(caller, params);
-			});*/
+    if (AreGObjectsValid() && AreGNamesValid()) {
+        gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
+            [this](ActorWrapper caller, void* params, std::string eventname) {
+                onGiveItem(caller, params);
+            });
+    } else {
+        cvarManager->log("(onLoad) Error: RLSDK classes are wrong, please contact JerryTheBee");
+    }
 
-		gameWrapper->HookEventWithCallerPost<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
-			[this](ActorWrapper caller, void* params, std::string eventname) {
-				onGiveItem(caller, params);
-			});
-	} else {
-		cvarManager->log("(onLoad) Error: RLSDK classes are wrong, please contact JerryTheBee");
-	}
+    for (int i = 0; i < NumPowerups; i++) {
+        std::string powerup = powerUpStrings[i];
+        std::string powerupEnglish = powerUpEnglishStrings[i];
+        cvarManager->registerCvar("rumble_enable_blue_" + powerup, "0", "Enables " + powerupEnglish + " for blue", true, true, 0, true, 1)
+            .addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
+                if (cvar.getBoolValue()) {
+                    enabledBlue.push_front(i);
+                } else {
+                    enabledBlue.remove(i);
+                }
+                });
 
-	for (int i = 0; i < NumPowerups; i++) {
-		std::string powerup = powerUpStrings[i];
-		std::string powerupEnglish = powerUpEnglishStrings[i];
-		cvarManager->registerCvar("rumble_enable_blue_" + powerup, "0", "Enables " + powerupEnglish + " for blue", true, true, 0, true, 1)
-			.addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
-				if (cvar.getBoolValue()) {
-					enabledBlue.push_front(i);
-				} else {
-					enabledBlue.remove(i);
-				}
-				});
-
-		cvarManager->registerCvar("rumble_enable_orange_" + powerup, "0", "Enables " + powerupEnglish + " for orange", true, true, 0, true, 1)
-			.addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
-				if (cvar.getBoolValue()) {
-					enabledOrange.push_front(i);
-				} else {
-					enabledOrange.remove(i);
-				}
-				});
-	}
+        cvarManager->registerCvar("rumble_enable_orange_" + powerup, "0", "Enables " + powerupEnglish + " for orange", true, true, 0, true, 1)
+            .addOnValueChanged([this, i](std::string, CVarWrapper cvar) {
+                if (cvar.getBoolValue()) {
+                    enabledOrange.push_front(i);
+                } else {
+                    enabledOrange.remove(i);
+                }
+                });
+    }
 }
 
 void CustomRumble1::onUnload()
@@ -63,451 +58,228 @@ void CustomRumble1::onUnload()
 }
 
 bool CustomRumble1::AreGObjectsValid() {
-	if (UObject::GObjObjects()->Num() > 0 && UObject::GObjObjects()->Max() > UObject::GObjObjects()->Num())
-	{
-		if (UObject::GObjObjects()->At(0)->GetFullName() == "Class Core.Config_ORS")
-		{
-			return true;
-		}
-	}
+    if (UObject::GObjObjects()->Num() > 0 && UObject::GObjObjects()->Max() > UObject::GObjObjects()->Num())
+    {
+        if (UObject::GObjObjects()->At(0)->GetFullName() == "Class Core.Config_ORS")
+        {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 bool CustomRumble1::AreGNamesValid() {
-	if (FName::Names()->Num() > 0 && FName::Names()->Max() > FName::Names()->Num())
-	{
-		if (FName(0).ToString() == "None")
-		{
-			return true;
-		}
-	}
+    if (FName::Names()->Num() > 0 && FName::Names()->Max() > FName::Names()->Num())
+    {
+        if (FName(0).ToString() == "None")
+        {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 bool CustomRumble1::LoadClasses() {
-	UGameData_TA* gameData = Utils::GetDefaultInstanceOf<UGameData_TA>();
+    UGameData_TA* gameData = Utils::GetDefaultInstanceOf<UGameData_TA>();
 
-	return ClassesSafe;
+    return ClassesSafe;
 }
 
 ServerWrapper CustomRumble1::getSW() {
-	if (gameWrapper->IsInOnlineGame()) {
-		return NULL;
-	}
-	if (gameWrapper->IsInGame()) {
-		auto server = gameWrapper->GetGameEventAsServer();
+    if (gameWrapper->IsInOnlineGame()) {
+        return NULL;
+    }
+    if (gameWrapper->IsInGame()) {
+        auto server = gameWrapper->GetGameEventAsServer();
 
-		if (server.IsNull()) {
-			cvarManager->log("null server");
-			return NULL;
-		}
+        if (server.IsNull()) {
+            cvarManager->log("null server");
+            return NULL;
+        }
 
-		return server;
-	}
-	//cvarManager->log("no server");
-	return NULL;
+        return server;
+    }
+    //cvarManager->log("no server");
+    return NULL;
 }
 
-void CustomRumble1::onPowerupGive(ActorWrapper caller, void* params) {
-	if (params == nullptr || &caller == nullptr) {
-		return;
-	}
-
-	if (!getSW()) return;
-
-	UItemPoolCycle_TA_execApplyItemToCar_Params* paramValues = (UItemPoolCycle_TA_execApplyItemToCar_Params*)params;
-
-	UItemPoolCycle_TA* itemPool = (UItemPoolCycle_TA*)caller.memory_address;
-
-	if (itemPool == nullptr) {
-		return;
-	}
-
-	TArray<class ASpecialPickup_TA*> remItems;
-
-	if (paramValues->Car == nullptr) {
-		return;
-	}
-	uint8_t teamNum = paramValues->Car->GetTeamNum();
-
-	CarWrapper wrappedCar((uintptr_t) paramValues->Car);
-
-	if (!wrappedCar) {
-		cvarManager->log("wrapped car broke");
-		return;
-	}
-
-	std::string nextPowerup = generateNextPower(wrappedCar.GetTeamNum2());
-
-	cvarManager->log("generated powerup " + nextPowerup);
-
-	if (nextPowerup == "") {
-		ASpecialPickup_TA* defPickup = Utils::GetDefaultInstanceOf<ASpecialPickup_TA>();
-		paramValues->Item = defPickup;
-		return;
-	}
-
-	/*
-	TArray<struct FRandomWeight> items = itemPool->Items;
-
-	for (struct FRandomWeight itemtype : items) {
-		UObject* object = itemtype.Obj;
-
-		if (object == nullptr) {
-			cvarManager->log("null object");
-			continue;
-		}
-
-		cvarManager->log("object name = " + object->Name.ToString());
-
-		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
-			ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
-
-			ARumblePickups_TA * pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
-
-			pickups->SetAvailablePickup(item, 0);
-			
-			//item->ApplyPickup(paramValues->Car);
-			return;
-		}
-	}
-
-	return;*/
-
-	while (true) {
-		//itemPool->OnNewRound();
-		//itemPool->RefillPool();
-		remItems = itemPool->RemainingItems;
-		for (ASpecialPickup_TA* remItem : remItems) {
-			if (remItem->PickupName.IsValid()) {
-				std::string name = remItem->PickupName.ToString();
-				cvarManager->log(name);
-
-				if (name == nextPowerup) {
-					//paramValues->Item = remItem;
-
-					wrappedCar.ForceNetUpdate2();
-					wrappedCar.ForceNetUpdatePacket();
-
-					RumblePickupComponentWrapper rumbleWrapper = wrappedCar.GetAttachedPickup();
-					wrappedCar.SetAttachedPickup2(RumblePickupComponentWrapper((uintptr_t)remItem));
-
-					rumbleWrapper.ForceNetUpdate2();
-					rumbleWrapper.ForceNetUpdatePacket();
-					//itemPool->GiveItem(paramValues->Car);
-					//if (remItem->IsA(ASpecialPickup_Targeted_TA)) {}
-					//remItem->OnCreated();
-					//remItem->OnVehicleSetupComplete();
-					//paramValues->Car->ForceNetUpdatePacket();
-					//remItem->ApplyPickup(paramValues->Car);
-					return;
-				}
-			}
-		}
-
-		itemPool->RefillPool();
-	}
-}
-
-bool looped = false;
 void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
-	if (params == nullptr || &caller == nullptr) {
-		return;
-	}
+    if (params == nullptr || &caller == nullptr) {
+        return;
+    }
 
-	if (looped) {
-		looped = false;
-		cvarManager->log("Looped!");
-		return;
-	} else {
-		looped = true;
-	}
+    if (!getSW()) return;
 
-	if (!getSW()) return;
+    UItemPoolCycle_TA_execGiveItem_Params* paramValues = (UItemPoolCycle_TA_execGiveItem_Params*)params;
 
-	/*std::vector<UItemPool_TA*> allpools = Utils::GetAllInstancesOf< UItemPool_TA>();
+    UItemPoolCycle_TA* itemPool = (UItemPoolCycle_TA*)caller.memory_address;
 
-	int i = 0;
-	for (UItemPool_TA* pool : allpools) {
-		TArray<struct FRandomWeight> items = pool->Items;
-		cvarManager->log("pool " + std::to_string(i));
-		cvarManager->log("is pool " + std::to_string(caller.memory_address == (uintptr_t) pool));
+    if (itemPool == nullptr || paramValues == nullptr) {
+        return;
+    }
 
-		for (struct FRandomWeight itemtype : items) {
-			UObject* object = itemtype.Obj;
+    CarWrapper wrappedCar((uintptr_t)paramValues->Car);
 
-			if (object == nullptr) {
-				cvarManager->log("null object");
-				continue;
-			}
+    if (!wrappedCar) {
+        cvarManager->log("wrapped car broke");
+        return;
+    }
 
-			cvarManager->log("object name = " + object->Name.ToString());
+    std::string nextPowerup = generateNextPower(wrappedCar.GetTeamNum2());
 
-			cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+    cvarManager->log("generated powerup " + nextPowerup);
 
-		}
-		i++;
-	}*/
+    /*if (nextPowerup == "") {
+        ASpecialPickup_TA* defPickup = Utils::GetDefaultInstanceOf<ASpecialPickup_TA>();
+        defPickup->bHasActivated = 1;
+        defPickup->ApplyPickup(paramValues->Car);
+        return;
+    }*/
 
-	UItemPoolCycle_TA_execGiveItem_Params* paramValues = (UItemPoolCycle_TA_execGiveItem_Params*)params;
+    TArray<FRandomWeight> items = itemPool->Items;
 
-	UItemPoolCycle_TA* itemPool = (UItemPoolCycle_TA*)caller.memory_address;
+    for (FRandomWeight& itemtype : items) {
+        UObject* object = itemtype.Obj;
 
-	if (itemPool == nullptr || paramValues == nullptr) {
-		return;
-	}
+        if (object == nullptr) {
+            cvarManager->log("null object");
+            continue;
+        }
 
-	TArray<struct FRandomWeight> items = itemPool->Items;
+        cvarManager->log("object name = " + object->Name.ToString());
+        cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
 
-	for (struct FRandomWeight itemtype : items) {
-		UObject* object = itemtype.Obj;
+        if (object->Name.ToString() == nextPowerup) {
+            itemtype.Weight = 2.0;
 
-		if (object == nullptr) {
-			cvarManager->log("null object");
-			continue;
-		}
+        }
+        else {
+            itemtype.Weight = 0.0;
+        }
+    }
+    
+    itemPool->RefillPool();
 
-		cvarManager->log("object name = " + object->Name.ToString());
-		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
-
-		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
-			//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
-
-			float newValue = 2.0;
-
-			memcpy_s(&itemtype.Weight, sizeof(float), &newValue, sizeof(float));
-			//itemtype.Weight = 2.0;
-			//itemtype.OrigWeight = 2.0;
-
-			cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
-			//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
-
-			//pickups->SetAvailablePickup(item, 0);
-
-			//item->ApplyPickup(paramValues->Car);
-
-		}
-		else {
-			float newValue = 0.0;
-			
-			memcpy_s(&itemtype.Weight, sizeof(float), &newValue, sizeof(float));
-		}
-	}
-
-	cvarManager->log("part2");
-	for (struct FRandomWeight itemtype : items) {
-		UObject* object = itemtype.Obj;
-
-		if (object == nullptr) {
-			cvarManager->log("null object");
-			continue;
-		}
-
-		cvarManager->log("object name = " + object->Name.ToString());
-		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
-	}
-	
-	itemPool->RefillPool();
-
-	itemPool->GiveItem(paramValues->Car);
-
-	//TArray<struct FRandomWeight> items = itemPool->Items;
-
-	/*std::vector<UPlayerItemDispenser_TA*> allDispensers = Utils::GetAllInstancesOf<UPlayerItemDispenser_TA>();
-
-	int i = 0;
-	for (UPlayerItemDispenser_TA* dispenser : allDispensers) {
-		UItemPool_TA* itemPool = dispenser->ItemPool;
-		TArray<struct FRandomWeight> items = itemPool->Items;
-
-		cvarManager->log("pool " + std::to_string(i));
-		cvarManager->log("is pool " + std::to_string(caller.memory_address == (uintptr_t)itemPool));
-
-		for (struct FRandomWeight itemtype : items) {
-			UObject* object = itemtype.Obj;
-
-			if (object == nullptr) {
-				cvarManager->log("null object");
-				continue;
-			}
-
-			cvarManager->log("object name = " + object->Name.ToString());
-			cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
-
-			if (object->Name.ToString() == "SpecialPickup_CarSpring") {
-				//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
-
-				itemtype.Weight = 2.0;
-				itemtype.OrigWeight = 2.0;
-
-				cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
-				//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
-
-				//pickups->SetAvailablePickup(item, 0);
-
-				//item->ApplyPickup(paramValues->Car);
-
-			}
-			else {
-				itemtype.Weight = 0.0;
-				itemtype.OrigWeight = 0.0;
-			}
-		}
-		if (caller.memory_address == (uintptr_t)itemPool) {
-			((UItemPoolCycle_TA*)itemPool)->RefillPool();
-		}
-		i++;
-	}*/
-
-	/*for (struct FRandomWeight itemtype : items) {
-		UObject* object = itemtype.Obj;
-
-		if (object == nullptr) {
-			cvarManager->log("null object");
-			continue;
-		}
-
-		cvarManager->log("object name = " + object->Name.ToString());
-
-		cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
-
-		if (object->Name.ToString() == "SpecialPickup_CarSpring") {
-			//ASpecialPickup_TA* item = (ASpecialPickup_TA*)object;
-
-			itemtype.Weight = 2.0;
-			itemtype.OrigWeight = 2.0;
-
-			cvarManager->log("carspring wt   = " + std::to_string(itemtype.Weight));
-			//ARumblePickups_TA* pickups = Utils::GetInstanceOf<ARumblePickups_TA>();
-
-			//pickups->SetAvailablePickup(item, 0);
-
-			//item->ApplyPickup(paramValues->Car);
-			
-		} else {
-			itemtype.Weight = 0.0;
-			itemtype.OrigWeight = 0.0;
-		}
-	}*/
+    itemPool->GiveItem(paramValues->Car);
 }
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
-	std::list<int> powerupsList;
+    std::list<int> powerupsList;
 
-	cvarManager->log("team = " + std::to_string(teamNum));
+    cvarManager->log("team = " + std::to_string(teamNum));
 
-	if (teamNum == 0) {
-		powerupsList = enabledBlue;
-	} else {
-		powerupsList = enabledOrange;
-	}
+    if (teamNum == 0) {
+        powerupsList = enabledBlue;
+    } else {
+        powerupsList = enabledOrange;
+    }
 
-	for (int powerup: powerupsList) {
-		cvarManager->log("option " + std::to_string(powerup) + " " + powerUpStrings[powerup]);
-	}
+    for (int powerup: powerupsList) {
+        cvarManager->log("option " + std::to_string(powerup) + " " + powerUpStrings[powerup]);
+    }
 
-	if (powerupsList.size() == 0) {
-		return "";
-	}
+    if (powerupsList.size() == 0) {
+        return "";
+    }
 
-	std::uniform_int_distribution<std::mt19937::result_type> dist(0, powerupsList.size() - 1);
+    std::uniform_int_distribution<std::mt19937::result_type> dist(0, powerupsList.size() - 1);
 
-	int result = dist(*RandomDevice.get());
+    int result = dist(*RandomDevice.get());
 
-	cvarManager->log("choices list index " + std::to_string(result));
+    cvarManager->log("choices list index " + std::to_string(result));
 
-	int i = 0;
-	int resultIndex = 0;
-	for (int powerup : powerupsList) {
-		if (i > result) {
-			cvarManager->log("couldn't find powerup");
-			return "";
-		}
+    int i = 0;
+    int resultIndex = 0;
+    for (int powerup : powerupsList) {
+        if (i > result) {
+            cvarManager->log("couldn't find powerup");
+            return "";
+        }
 
-		//cvarManager->log("comparing i: " + std::to_string(i) + " to result: " + std::to_string(result));
+        //cvarManager->log("comparing i: " + std::to_string(i) + " to result: " + std::to_string(result));
 
-		if (i == result) {
-			resultIndex = powerup;
-			cvarManager->log("powerup list index " + std::to_string(resultIndex));
+        if (i == result) {
+            resultIndex = powerup;
+            cvarManager->log("powerup list index " + std::to_string(resultIndex));
 
-			return powerUpStrings[resultIndex];
-		}
-		
-		i++;
-	}
+            return powerUpStrings[resultIndex];
+        }
+        
+        i++;
+    }
 
-	
+    
 }
 
 std::string CustomRumble1::GetPluginName() {
-	return "Custom Rumble";
+    return "Custom Rumble";
 }
 
 void CustomRumble1::SetImGuiContext(uintptr_t ctx) {
-	ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext*>(ctx));
+    ImGui::SetCurrentContext(reinterpret_cast<ImGuiContext*>(ctx));
 }
 
 void CustomRumble1::RenderSettings() {
-	ImGui::Columns(2);
-	ImGui::TextUnformatted("Blue team items");
-	ImGui::NextColumn();
-	ImGui::TextUnformatted("Orange team items");
-	ImGui::Columns(1);
-	ImGui::Separator();
-	ImGui::Columns(2);
+    ImGui::Columns(2);
+    ImGui::TextUnformatted("Blue team items");
+    ImGui::NextColumn();
+    ImGui::TextUnformatted("Orange team items");
+    ImGui::Columns(1);
+    ImGui::Separator();
+    ImGui::Columns(2);
 
-	for (int i = 0; i < NumPowerups; i++) {
-		std::string powerup = powerUpStrings[i];
-		std::string powerupEnglish = powerUpEnglishStrings[i];
-		CVarWrapper enablePowerupCvar = cvarManager->getCvar("rumble_enable_blue_" + powerup);
+    for (int i = 0; i < NumPowerups; i++) {
+        std::string powerup = powerUpStrings[i];
+        std::string powerupEnglish = powerUpEnglishStrings[i];
+        CVarWrapper enablePowerupCvar = cvarManager->getCvar("rumble_enable_blue_" + powerup);
 
-		if (!enablePowerupCvar) {
-			return;
-		}
+        if (!enablePowerupCvar) {
+            return;
+        }
 
-		bool enabledPowerup = enablePowerupCvar.getBoolValue();
+        bool enabledPowerup = enablePowerupCvar.getBoolValue();
 
-		/*if (ImGui::Checkbox("Enable plugin", &enabled)) {
-			gameWrapper->Execute([this, enableCvar, enabled](...) mutable {
-				enableCvar.setValue(enabled);
-				});
-		}*/
+        /*if (ImGui::Checkbox("Enable plugin", &enabled)) {
+            gameWrapper->Execute([this, enableCvar, enabled](...) mutable {
+                enableCvar.setValue(enabled);
+                });
+        }*/
 
-		if (ImGui::Selectable(powerupEnglish.c_str(), &enabledPowerup, ImGuiSelectableFlags_DontClosePopups)) {
-			enablePowerupCvar.setValue(std::to_string(enabledPowerup));
-		}
-	}
+        if (ImGui::Selectable(powerupEnglish.c_str(), &enabledPowerup, ImGuiSelectableFlags_DontClosePopups)) {
+            enablePowerupCvar.setValue(std::to_string(enabledPowerup));
+        }
+    }
 
-	ImGui::NextColumn();
-	for (int i = 0; i < NumPowerups; i++) {
-		std::string powerup = powerUpStrings[i];
-		std::string powerupEnglish = powerUpEnglishStrings[i];
-		CVarWrapper enablePowerupCvar = cvarManager->getCvar("rumble_enable_orange_" + powerup);
+    ImGui::NextColumn();
+    for (int i = 0; i < NumPowerups; i++) {
+        std::string powerup = powerUpStrings[i];
+        std::string powerupEnglish = powerUpEnglishStrings[i];
+        CVarWrapper enablePowerupCvar = cvarManager->getCvar("rumble_enable_orange_" + powerup);
 
-		if (!enablePowerupCvar) {
-			return;
-		}
+        if (!enablePowerupCvar) {
+            return;
+        }
 
-		bool enabledPowerup = enablePowerupCvar.getBoolValue();
+        bool enabledPowerup = enablePowerupCvar.getBoolValue();
 
-		/*if (ImGui::Checkbox("Enable plugin", &enabled)) {
-			gameWrapper->Execute([this, enableCvar, enabled](...) mutable {
-				enableCvar.setValue(enabled);
-				});
-		}*/
+        /*if (ImGui::Checkbox("Enable plugin", &enabled)) {
+            gameWrapper->Execute([this, enableCvar, enabled](...) mutable {
+                enableCvar.setValue(enabled);
+                });
+        }*/
 
-		std::string label = powerupEnglish + "##orange";
+        std::string label = powerupEnglish + "##orange";
 
-		if (ImGui::Selectable(label.c_str(), &enabledPowerup, ImGuiSelectableFlags_DontClosePopups)) {
-			enablePowerupCvar.setValue(std::to_string(enabledPowerup));
-		}
-	}
+        if (ImGui::Selectable(label.c_str(), &enabledPowerup, ImGuiSelectableFlags_DontClosePopups)) {
+            enablePowerupCvar.setValue(std::to_string(enabledPowerup));
+        }
+    }
 
-	ImGui::Columns(1);
+    ImGui::Columns(1);
 
-	ImGui::Separator();
+    ImGui::Separator();
 
-	ImGui::TextUnformatted("Plugin made by JerryTheBee#1117 - DM me on discord for custom plugin commissions!");
+    ImGui::TextUnformatted("Plugin made by JerryTheBee#1117 - DM me on discord for custom plugin commissions!");
 }
