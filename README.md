@@ -6,7 +6,7 @@ Set each team's possible items! You can set one team to have all plungers and th
 
 Made with help from ItsBrank. TY Brank \<3
 
-Requires an ItsBrank RLSDK generated to build. Unfortunately I cannot share how to generate but this is the repo. [https://github.com/ItsBranK/UE3SDKGenerator](https://github.com/ItsBranK/UE3SDKGenerator)
+Requires an ItsBrank RLSDK generated to build. Unfortunately I cannot share how to generate but this is the repo. [https://github.com/ItsBranK/UE3SDKGenerator](https://github.com/ItsBranK/UE3SDKGenerator)  
 Also uses a memory namespace based off of Brank's [CodeRed](https://github.com/CodeRedModding/CodeRed-Universal)
 
 Plugin commissioned by [Lethamyr](https://youtube.com/c/Lethamyr)
