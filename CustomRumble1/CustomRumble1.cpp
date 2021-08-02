@@ -18,10 +18,18 @@ void CustomRumble1::onLoad()
 
     RandomDevice = std::make_shared<std::mt19937>(rng);
 
-    GObjects = reinterpret_cast<TArray<UObject*>*>(Memory::FindPattern(GetModuleHandleA("RocketLeague.exe"), GObjects_Pattern, GObjects_Mask));
-    GNames = reinterpret_cast<TArray<FNameEntry*>*>(Memory::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
+    GObjects = reinterpret_cast<TArray<UObject*>*>(Memory::FindPattern(GetModuleHandleA(nullptr), GObjects_Pattern, GObjects_Mask));
+    GNames = reinterpret_cast<TArray<FNameEntry*>*>(Memory::FindPattern(GetModuleHandleA(nullptr), GNames_Pattern, GNames_Mask));
+
+    if (!GObjects || !GNames) {
+        cvarManager->log("(onLoad) Error: RLSDK classes are wrong, please contact JerryTheBee");
+        cvarManager->log(std::to_string(!GObjects) + ", " + std::to_string(!GNames));
+        ClassesSafe = false;
+        return;
+    }
 
     if (AreGObjectsValid() && AreGNamesValid()) {
+        ClassesSafe = true;
         gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
             [this](ActorWrapper caller, void* params, std::string eventname) {
                 onGiveItem(caller, params);
@@ -82,8 +90,8 @@ bool CustomRumble1::AreGNamesValid() {
 }
 
 bool CustomRumble1::LoadClasses() {
-    UGameData_TA* gameData = Memory::GetDefaultInstanceOf<UGameData_TA>();
-
+    //UGameData_TA* gameData = Memory::GetDefaultInstanceOf<UGameData_TA>();
+    ClassesSafe = true;
     return ClassesSafe;
 }
 
@@ -95,7 +103,7 @@ ServerWrapper CustomRumble1::getSW() {
         auto server = gameWrapper->GetGameEventAsServer();
 
         if (server.IsNull()) {
-            cvarManager->log("null server");
+            //cvarManager->log("null server");
             return NULL;
         }
 
@@ -123,13 +131,13 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
     CarWrapper wrappedCar((uintptr_t)paramValues->Car);
 
     if (!wrappedCar) {
-        cvarManager->log("wrapped car broke");
+        //cvarManager->log("wrapped car broke");
         return;
     }
 
     std::string nextPowerup = generateNextPower(wrappedCar.GetTeamNum2());
 
-    cvarManager->log("generated powerup " + nextPowerup);
+    //cvarManager->log("generated powerup " + nextPowerup);
 
     TArray<FRandomWeight> items = itemPool->Items;
 
@@ -137,7 +145,7 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
         UObject* object = itemtype.Obj;
 
         if (object == nullptr) {
-            cvarManager->log("null object");
+            //cvarManager->log("null object");
             continue;
         }
 
@@ -161,7 +169,7 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
 std::string CustomRumble1::generateNextPower(int teamNum) {
     std::list<int> powerupsList;
 
-    cvarManager->log("team = " + std::to_string(teamNum));
+    //cvarManager->log("team = " + std::to_string(teamNum));
 
     if (teamNum == 0) {
         powerupsList = enabledBlue;
@@ -187,7 +195,7 @@ std::string CustomRumble1::generateNextPower(int teamNum) {
     int resultIndex = 0;
     for (int powerup : powerupsList) {
         if (i > result) {
-            cvarManager->log("couldn't find powerup");
+            //cvarManager->log("couldn't find powerup");
             return "";
         }
 
@@ -220,6 +228,9 @@ void CustomRumble1::RenderSettings() {
     ImGui::NextColumn();
     ImGui::TextUnformatted("Orange team items");
     ImGui::Columns(1);
+    if (!ClassesSafe) {
+        ImGui::TextUnformatted("Something went wrong. Try reloading the plugin or rebooting the game");
+    }
     ImGui::Separator();
     ImGui::Columns(2);
 
