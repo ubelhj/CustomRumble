@@ -75,21 +75,6 @@ public:
 		"Tornado"
 	};
 
-	/*
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BallSpring
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_CarSpring
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_GravityWell
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_Swapper
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BallVelcro
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BallGrapplingHook
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_StrongHit
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BallLasso
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BallFreeze
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_BoostOverride
-	[20:34:10] [bakkesmod] [class CustomRumble1] object name = SpecialPickup_Tornado
-	*/
-
-	void onPowerupGive(ActorWrapper caller, void* params);
 	void onGiveItem(ActorWrapper caller, void* params);
 	std::string generateNextPower(int teamNum);
 

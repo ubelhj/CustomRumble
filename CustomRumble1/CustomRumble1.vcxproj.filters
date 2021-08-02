@@ -105,6 +105,9 @@
     <ClCompile Include="RLSDK\GameDefines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RLSDK\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CustomRumble1.h">
@@ -258,6 +261,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RLSDK\SdkHeaders.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RLSDK\Utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

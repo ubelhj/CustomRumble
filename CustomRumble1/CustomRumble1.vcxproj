@@ -49,6 +49,7 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)plugins\</OutDir>
     <IntDir>$(SolutionDir)build\.intermediates\$(Configuration)\</IntDir>
+    <TargetName>CustomRumble</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -122,6 +123,7 @@
     <ClCompile Include="RLSDK\SDK_HEADERS\TAGame_classes.cpp" />
     <ClCompile Include="RLSDK\SDK_HEADERS\WinDrv_classes.cpp" />
     <ClCompile Include="RLSDK\SDK_HEADERS\XAudio2_classes.cpp" />
+    <ClCompile Include="RLSDK\Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imconfig.h" />
@@ -174,6 +176,7 @@
     <ClInclude Include="RLSDK\SDK_HEADERS\XAudio2_classes.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\XAudio2_parameters.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\XAudio2_structs.hpp" />
+    <ClInclude Include="RLSDK\Utils.hpp" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

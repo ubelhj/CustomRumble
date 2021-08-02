@@ -18,8 +18,8 @@ void CustomRumble1::onLoad()
 
     RandomDevice = std::make_shared<std::mt19937>(rng);
 
-    GObjects = reinterpret_cast<TArray<UObject*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GObjects_Pattern, GObjects_Mask));
-    GNames = reinterpret_cast<TArray<FNameEntry*>*>(Utils::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
+    GObjects = reinterpret_cast<TArray<UObject*>*>(Memory::FindPattern(GetModuleHandleA("RocketLeague.exe"), GObjects_Pattern, GObjects_Mask));
+    GNames = reinterpret_cast<TArray<FNameEntry*>*>(Memory::FindPattern(GetModuleHandleA("RocketLeague.exe"), GNames_Pattern, GNames_Mask));
 
     if (AreGObjectsValid() && AreGNamesValid()) {
         gameWrapper->HookEventWithCaller<ActorWrapper>("Function TAGame.ItemPoolCycle_TA.GiveItem",
@@ -82,7 +82,7 @@ bool CustomRumble1::AreGNamesValid() {
 }
 
 bool CustomRumble1::LoadClasses() {
-    UGameData_TA* gameData = Utils::GetDefaultInstanceOf<UGameData_TA>();
+    UGameData_TA* gameData = Memory::GetDefaultInstanceOf<UGameData_TA>();
 
     return ClassesSafe;
 }
@@ -131,13 +131,6 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
 
     cvarManager->log("generated powerup " + nextPowerup);
 
-    /*if (nextPowerup == "") {
-        ASpecialPickup_TA* defPickup = Utils::GetDefaultInstanceOf<ASpecialPickup_TA>();
-        defPickup->bHasActivated = 1;
-        defPickup->ApplyPickup(paramValues->Car);
-        return;
-    }*/
-
     TArray<FRandomWeight> items = itemPool->Items;
 
     for (FRandomWeight& itemtype : items) {
@@ -148,8 +141,8 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
             continue;
         }
 
-        cvarManager->log("object name = " + object->Name.ToString());
-        cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+        //cvarManager->log("object name = " + object->Name.ToString());
+        //cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
 
         if (object->Name.ToString() == nextPowerup) {
             itemtype.Weight = 2.0;
@@ -176,9 +169,9 @@ std::string CustomRumble1::generateNextPower(int teamNum) {
         powerupsList = enabledOrange;
     }
 
-    for (int powerup: powerupsList) {
+    /*for (int powerup : powerupsList) {
         cvarManager->log("option " + std::to_string(powerup) + " " + powerUpStrings[powerup]);
-    }
+    }*/
 
     if (powerupsList.size() == 0) {
         return "";
@@ -188,7 +181,7 @@ std::string CustomRumble1::generateNextPower(int teamNum) {
 
     int result = dist(*RandomDevice.get());
 
-    cvarManager->log("choices list index " + std::to_string(result));
+    //cvarManager->log("choices list index " + std::to_string(result));
 
     int i = 0;
     int resultIndex = 0;
@@ -202,15 +195,15 @@ std::string CustomRumble1::generateNextPower(int teamNum) {
 
         if (i == result) {
             resultIndex = powerup;
-            cvarManager->log("powerup list index " + std::to_string(resultIndex));
+            //cvarManager->log("powerup list index " + std::to_string(resultIndex));
 
             return powerUpStrings[resultIndex];
         }
         
         i++;
     }
-
     
+    return "";
 }
 
 std::string CustomRumble1::GetPluginName() {
@@ -281,5 +274,6 @@ void CustomRumble1::RenderSettings() {
 
     ImGui::Separator();
 
+    ImGui::TextUnformatted("Plugin commissioned by Lethamyr");
     ImGui::TextUnformatted("Plugin made by JerryTheBee#1117 - DM me on discord for custom plugin commissions!");
 }
