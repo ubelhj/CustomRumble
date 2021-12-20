@@ -2,9 +2,9 @@
 
 #include "bakkesmod/plugin/pluginwindow.h"
 #include "bakkesmod/plugin/PluginSettingsWindow.h"
-#include <RLSDK/Utils.hpp>
+#include "RLSDK/Utils.hpp"
 #include <random>
-#include "RLSDK/GameDefines.hpp"
+//#include "RLSDK/GameDefines.hpp"
 
 #include "version.h"
 constexpr auto plugin_version = stringify(VERSION_MAJOR) "." stringify(VERSION_MINOR) "." stringify(VERSION_PATCH) "." stringify(VERSION_BUILD);

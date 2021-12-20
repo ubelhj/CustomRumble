@@ -148,7 +148,9 @@
     <ClInclude Include="RLSDK\SDK_HEADERS\AkAudio_structs.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\Core_classes.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\Core_parameters.hpp" />
-    <ClInclude Include="RLSDK\SDK_HEADERS\Core_structs.hpp" />
+    <ClInclude Include="RLSDK\SDK_HEADERS\Core_structs.hpp">
+      <DeploymentContent>true</DeploymentContent>
+    </ClInclude>
     <ClInclude Include="RLSDK\SDK_HEADERS\Engine_classes.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\Engine_parameters.hpp" />
     <ClInclude Include="RLSDK\SDK_HEADERS\Engine_structs.hpp" />
