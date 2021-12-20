@@ -142,28 +142,23 @@ void CustomRumble1::onGiveItem(ActorWrapper caller, void* params) {
     TArray<FRandomWeight> items = itemPool->Items;
 
     for (FRandomWeight& itemtype : items) {
-        UObject* object = itemtype.Obj;
+        RumblePickupComponentWrapper item = RumblePickupComponentWrapper((uintptr_t) itemtype.Obj);
 
-        if (object == nullptr) {
-            //cvarManager->log("null object");
+        if (!item) {
+            //cvarManager->log("null item");
             continue;
         }
 
-        //cvarManager->log("object name = " + object->Name.ToString());
-        //cvarManager->log("object wt   = " + std::to_string(itemtype.Weight));
+        cvarManager->log(item.GetPickupName().ToString());
 
-        if (object->Name.ToString() == nextPowerup) {
+        if (item.GetPickupName().ToString() == nextPowerup) {
             itemtype.Weight = 2.0;
-
-        }
-        else {
+        } else {
             itemtype.Weight = 0.0;
         }
     }
     
     itemPool->RefillPool();
-
-    //itemPool->GiveItem(paramValues->Car);
 }
 
 std::string CustomRumble1::generateNextPower(int teamNum) {
