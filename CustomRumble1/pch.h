@@ -14,6 +14,9 @@
 #include "fmt/core.h"
 #include "fmt/ranges.h"
 
+#include <Windows.h>
+#include <Psapi.h>
+
 extern std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
 template<typename S, typename... Args>
