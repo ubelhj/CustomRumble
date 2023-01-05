@@ -17,6 +17,8 @@
 #include <Windows.h>
 #include <Psapi.h>
 
+#include "RLSDK/Utils.hpp"
+
 extern std::shared_ptr<CVarManagerWrapper> _globalCvarManager;
 
 template<typename S, typename... Args>

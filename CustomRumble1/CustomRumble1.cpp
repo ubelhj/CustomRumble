@@ -66,9 +66,9 @@ void CustomRumble1::onUnload()
 }
 
 bool CustomRumble1::AreGObjectsValid() {
-    if (UObject::GObjObjects()->Num() > 0 && UObject::GObjObjects()->Max() > UObject::GObjObjects()->Num())
+    if (UObject::GObjObjects()->size() > 0 && UObject::GObjObjects()->capacity() > UObject::GObjObjects()->size())
     {
-        if (UObject::GObjObjects()->At(0)->GetFullName() == "Class Core.Config_ORS")
+        if (UObject::GObjObjects()->at(0)->GetFullName() == "Class Core.Config_ORS")
         {
             return true;
         }
@@ -78,7 +78,7 @@ bool CustomRumble1::AreGObjectsValid() {
 }
 
 bool CustomRumble1::AreGNamesValid() {
-    if (FName::Names()->Num() > 0 && FName::Names()->Max() > FName::Names()->Num())
+    if (FName::Names()->size() > 0 && FName::Names()->capacity() > FName::Names()->size())
     {
         if (FName(0).ToString() == "None")
         {
